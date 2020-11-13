@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  workflow_dispatch
+
+jobs:
+  linux-arm-host-build:
+    name: Build on Linux ARM
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.1.0
+      - name: Install Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle
+            ~/.konan
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - name: Link
+        run: ./gradlew linkDebugTestLinuxArm32Hfp
+      - name: Test
+        uses: uraimo/run-on-arch-action@v2.0.5
+        id: test
+        with:
+          arch: armv7
+          distro: ubuntu20.04
+          run: find . -name "test.kexe" -exec {} +
